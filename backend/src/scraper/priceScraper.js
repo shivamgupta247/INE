@@ -88,7 +88,7 @@ export async function scrapeProduct(product, options = {}) {
         const isRevealVisible = await revealButton.isVisible({ timeout: 5000 }).catch(() => false);
         
         if (isRevealVisible) {
-          await revealButton.click({ timeout: 10000 });
+          await revealButton.click({ timeout: 10000, force: true });
         }
 
         // Wait for price to load (the page has its own internal retry mechanism)
@@ -224,7 +224,7 @@ async function handleCookieConsent(page) {
   try {
     // Wait briefly for cookie overlay to appear (it shows up with 1500-5000ms delay)
     const acceptBtn = page.locator('.cookie-banner button:has-text("Accept")');
-    const isVisible = await acceptBtn.isVisible({ timeout: 3000 }).catch(() => false);
+    const isVisible = await acceptBtn.isVisible({ timeout: 5000 }).catch(() => false);
     if (isVisible) {
       await acceptBtn.click();
       console.log('[Scraper] Dismissed cookie consent');
