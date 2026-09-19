@@ -38,7 +38,7 @@ export async function scrapeProduct(product, options = {}) {
     if (!browser) {
       browser = await chromium.launch({
         headless,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process'],
       });
       ownBrowser = true;
     }
@@ -188,7 +188,7 @@ export async function scrapeAllProducts(products, options = {}) {
   try {
     browser = await chromium.launch({
       headless,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process'],
     });
     const scrapeRunId = uuidv4();
 
