@@ -1,43 +1,64 @@
 # INE Price Tracker
 
-A full-stack web application to track product prices and stock from the INE mock store over time.
+A full-stack web application built to monitor product prices and stock availability from the INE Mock Store. It bypasses simulated anti-bot challenges, logs historical price data to help users track price drops over time, and sends automated email alerts.
 
-## Tech Stack
-- **Frontend**: React.js, Vite (Deployed on Vercel)
-- **Backend**: Node.js, Express, Playwright (Deployed on Render via Docker)
-- **Database**: PostgreSQL (Supabase)
+## Key Features
+- **Live Tracking & Anti-Bot Bypass:** Uses Playwright to simulate human interactions and bypass store protections.
+- **Unified Dashboard:** Track multiple products, see real-time stock counts, and filter items by highest discount.
+- **Automated Email Alerts:** Integrated with Resend to automatically send an HTML email when a price drop or a back-in-stock event occurs.
+- **Price History Graph:** Visualize pricing trends over time.
 
-## Setup Instructions (Local Development)
+## Environment Variables
 
-### Prerequisites
-- Node.js (v18+)
-- Supabase account & project
+To run this project locally, you'll need to set up `.env` files in both the frontend and backend directories.
 
-### Backend Setup
-1. Navigate to backend: `cd backend`
-2. Install dependencies: `npm install`
-3. Create a `.env` file:
-   ```env
-   PORT=3001
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_ANON_KEY=your_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   CRON_SECRET=your_secret_for_cron
-   FRONTEND_URL=http://localhost:5173
-   SCRAPE_TIMEOUT_MS=45000
-   SCRAPE_MAX_RETRIES=3
-   PLAYWRIGHT_HEADLESS=true
+### Backend (`/backend/.env`)
+Create a file named `.env` in the `backend` folder:
+```
+PORT=5000
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+STORE_BASE_URL=https://demo.inelabteamdev.com
+CRON_SECRET=my_super_secret_cron_key
+
+# Email Alerts
+RESEND_API_KEY=your_resend_api_key_here
+RESEND_FROM_EMAIL=onboarding@resend.dev
+ALERT_EMAIL=your_verified_email@gmail.com
+```
+
+### Frontend (`/frontend/.env`)
+Create a file named `.env` in the `frontend` folder:
+```
+VITE_API_URL=http://localhost:5000
+```
+
+## Setup & Running Locally
+
+1. **Install Dependencies**
+   Open two terminals, one for the frontend and one for the backend.
+   ```bash
+   # Terminal 1 (Backend)
+   cd backend
+   npm install
+
+   # Terminal 2 (Frontend)
+   cd frontend
+   npm install
    ```
-4. Start backend: `npm run dev`
 
-### Frontend Setup
-1. Navigate to frontend: `cd frontend`
-2. Install dependencies: `npm install`
-3. Create a `.env` file:
-   ```env
-   VITE_API_URL=http://localhost:3001
+2. **Start the Development Servers**
+   ```bash
+   # Terminal 1 (Backend)
+   npm run dev
+
+   # Terminal 2 (Frontend)
+   npm run dev
    ```
-4. Start frontend: `npm run dev`
+
+3. **View the Dashboard**
+   Open your browser and navigate to `http://localhost:5173`.
 
 ## Scraping Schedule
-The scraping is scheduled to run every **2 hours** automatically via an external cron job (cron-job.org) that sends a POST request to `/api/cron/scrape` with the required `x-cron-secret` header.
+The backend exposes a secure `/api/cron/scrape` endpoint. I've configured an external service (`cron-job.org`) to hit this endpoint **every 2 hours**. 
+This frequency was chosen because Playwright is highly resource-intensive, and scraping too frequently (like every 1 minute) causes extreme server load and RAM crashes on free hosting tiers (like Render). Every 2 hours provides a perfect balance between staying updated and keeping the server healthy.

@@ -411,6 +411,41 @@ async function extractPriceAndStock(page) {
 }
 
 /**
+ * Convert raw Playwright error messages to user-friendly strings.
+ */
+function sanitizeErrorMessage(msg) {
+  if (!msg) return null;
+  const str = String(msg);
+  
+  if (str.includes('challenge_failed')) {
+    return 'Store anti-bot challenge failed (bot detected)';
+  }
+  if (str.includes('Retrying after failed price load') || str.includes('Retrying due to')) {
+    return str; // Already clean
+  }
+  if (str.includes('Retrying after')) {
+    return 'Retrying scrape after a previous failure';
+  }
+  if (str.includes('Timeout') || str.includes('waiting for price') || str.includes('locator.click: Timeout')) {
+    return 'Timeout: Server was too slow to load the page';
+  }
+  if (str.includes('Target page, context or browser has been closed') || str.includes('browser.newContext')) {
+    return 'Browser crashed or closed unexpectedly due to server overload';
+  }
+  if (str.includes('Navigation failed') || str.includes('net::ERR_')) {
+    return 'Network error: Could not reach the store';
+  }
+  
+  // Clean up Playwright's verbose call logs
+  const callLogIndex = str.indexOf('Call log:');
+  if (callLogIndex !== -1) {
+    return str.substring(0, callLogIndex).trim();
+  }
+  
+  return str.length > 100 ? str.substring(0, 97) + '...' : str;
+}
+
+/**
  * Create a scrape log entry.
  */
 function createLog(productId, scrapeRunId, attempt, status, errorType, errorMessage, responseTime, price, stock) {
@@ -420,7 +455,7 @@ function createLog(productId, scrapeRunId, attempt, status, errorType, errorMess
     attempt_number: attempt,
     status,
     error_type: errorType || null,
-    error_message: errorMessage || null,
+    error_message: sanitizeErrorMessage(errorMessage),
     response_time_ms: responseTime || null,
     extracted_price: price || null,
     extracted_stock: stock !== undefined ? stock : null,

@@ -7,6 +7,7 @@ export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState('recent');
 
   async function fetchProducts() {
     setLoading(true);
@@ -25,33 +26,28 @@ export default function Dashboard() {
     fetchProducts();
   }, []);
 
+  const sortedProducts = [...products].sort((a, b) => {
+    if (sortBy === 'discount') {
+      const getDiscount = (p) => (p.latest_mrp && p.latest_price && p.latest_mrp > p.latest_price) ? ((p.latest_mrp - p.latest_price) / p.latest_mrp) : 0;
+      return getDiscount(b) - getDiscount(a);
+    }
+    if (sortBy === 'price_asc') {
+      return (a.latest_price || 999999) - (b.latest_price || 999999);
+    }
+    // Default: recent updates
+    return new Date(b.last_scraped_at || 0) - new Date(a.last_scraped_at || 0);
+  });
+
   return (
     <div className="dashboard-container">
       <section className="hero-section">
         <h1 className="hero-title">Track Product Prices in Real-Time</h1>
-        <p className="hero-subtitle">
-          Search the INE mock store, track products, and monitor live price & stock fluctuations with automated anti-bot challenge bypass.
-        </p>
-        <SearchBar onProductTracked={fetchProducts} />
+        <div style={{ marginTop: '24px' }}>
+          <SearchBar onProductTracked={fetchProducts} />
+        </div>
       </section>
 
       <section className="tracked-section">
-        <div className="section-header">
-          <div>
-            <h2 className="section-title">Tracked Products</h2>
-            <span className="section-count">
-              {products.length} {products.length === 1 ? 'product' : 'products'} currently tracked
-            </span>
-          </div>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={fetchProducts}
-            disabled={loading}
-          >
-            {loading ? 'Refreshing...' : '↻ Refresh'}
-          </button>
-        </div>
-
         {loading && (
           <div className="status-loading">
             <span className="spinner" /> Loading tracked products...
@@ -74,10 +70,24 @@ export default function Dashboard() {
         )}
 
         {!loading && !error && products.length > 0 && (
-          <div className="products-grid">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          <div className="products-section">
+            <div className="sort-controls">
+              <span className="sort-label">Sort by:</span>
+              <select 
+                className="sort-select" 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="recent">Recently Updated</option>
+                <option value="discount">Highest Discount</option>
+                <option value="price_asc">Price: Low to High</option>
+              </select>
+            </div>
+            <div className="products-grid">
+              {sortedProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           </div>
         )}
       </section>

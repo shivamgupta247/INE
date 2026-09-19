@@ -21,6 +21,12 @@ const config = {
     headless: process.env.PLAYWRIGHT_HEADLESS !== 'false',
     baseUrl: 'https://demo.inelabteamdev.com',
   },
+
+  resend: {
+    apiKey: process.env.RESEND_API_KEY,
+    fromEmail: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+    alertEmail: process.env.ALERT_EMAIL || 'sstephen@ine.com', 
+  },
 };
 
 export default config;

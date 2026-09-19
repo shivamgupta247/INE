@@ -15,7 +15,7 @@ function formatDate(dateStr) {
   const now = new Date();
   const diffMs = now - d;
   const diffMins = Math.floor(diffMs / 60000);
-  
+
   if (diffMins < 1) return 'Just now';
   if (diffMins < 60) return `${diffMins}m ago`;
   const diffHours = Math.floor(diffMins / 60);
@@ -57,6 +57,11 @@ export default function ProductCard({ product }) {
       <div className="product-meta">
         <span className="badge badge-category">{product.category}</span>
         <span className="badge badge-sku">{product.sku}</span>
+        {product.latest_mrp && product.latest_price && product.latest_price < product.latest_mrp && (
+          <span className="badge badge-discount">
+            {Math.round(((product.latest_mrp - product.latest_price) / product.latest_mrp) * 100)}% OFF
+          </span>
+        )}
       </div>
 
       <div className="product-price-row">

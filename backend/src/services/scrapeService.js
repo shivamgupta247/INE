@@ -10,6 +10,7 @@ import {
   saveScrapedPrice,
   saveScrapeLogs,
 } from './trackedProducts.js';
+import { sendPriceDropAlert, sendBackInStockAlert } from './emailService.js';
 
 /**
  * Scrape a single product by tracked product ID.
@@ -34,6 +35,21 @@ export async function scrapeOneProduct(trackedProductId, options = {}) {
   if (result.success && result.data) {
     await saveScrapedPrice(product.id, result.data);
     console.log(`[ScrapeService] Saved price for ${product.name}: ${result.data.price} ${result.data.currency}`);
+
+    // Check for alerts
+    const oldPrice = product.latest_price;
+    const newPrice = result.data.price;
+    const oldStock = product.latest_stock_status;
+    const newStock = result.data.stockStatus;
+    const currency = result.data.currency || 'INR';
+
+    if (oldPrice && newPrice && newPrice < oldPrice) {
+      await sendPriceDropAlert(product, oldPrice, newPrice, currency);
+    }
+    
+    if (oldStock === 'OUT_OF_STOCK' && newStock === 'IN_STOCK') {
+      await sendBackInStockAlert(product, newPrice, currency);
+    }
   } else {
     console.log(`[ScrapeService] Scrape failed for ${product.name}: ${result.error}`);
   }
@@ -82,6 +98,25 @@ export async function scrapeAllActiveProducts() {
       await saveScrapedPrice(result.productId, result.data).catch(err => {
         console.error('[ScrapeService] Failed to save price:', err.message);
       });
+      
+      // Check for alerts
+      const product = products.find(p => p.id === result.productId);
+      if (product) {
+        const oldPrice = product.latest_price;
+        const newPrice = result.data.price;
+        const oldStock = product.latest_stock_status;
+        const newStock = result.data.stockStatus;
+        const currency = result.data.currency || 'INR';
+
+        if (oldPrice && newPrice && newPrice < oldPrice) {
+          await sendPriceDropAlert(product, oldPrice, newPrice, currency);
+        }
+        
+        if (oldStock === 'OUT_OF_STOCK' && newStock === 'IN_STOCK') {
+          await sendBackInStockAlert(product, newPrice, currency);
+        }
+      }
+
       summary.succeeded++;
     } else {
       summary.failed++;

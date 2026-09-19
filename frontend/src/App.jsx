@@ -13,14 +13,6 @@ export default function App() {
             <span className="logo-icon">◧</span>
             INE Price Tracker
           </Link>
-          <nav className="nav-links">
-            <Link
-              to="/"
-              className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
-            >
-              Dashboard
-            </Link>
-          </nav>
         </div>
       </header>
 
@@ -30,10 +22,6 @@ export default function App() {
           <Route path="/product/:id" element={<ProductDetail />} />
         </Routes>
       </main>
-
-      <footer className="app-footer">
-        INE Price Tracker · Monitoring demo.inelabteamdev.com · Prices refresh every 2 hours
-      </footer>
     </div>
   );
 }
