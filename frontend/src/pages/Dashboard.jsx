@@ -6,19 +6,27 @@ import ProductCard from '../components/ProductCard';
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isWaking, setIsWaking] = useState(false);
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState('recent');
 
   async function fetchProducts() {
     setLoading(true);
+    setIsWaking(false);
     setError(null);
+    
+    // If it takes more than 3 seconds, it's likely a Render cold start
+    const wakeTimer = setTimeout(() => setIsWaking(true), 3000);
+
     try {
       const data = await getTrackedProducts();
       setProducts(data.products || []);
     } catch (err) {
       setError(err.message);
     } finally {
+      clearTimeout(wakeTimer);
       setLoading(false);
+      setIsWaking(false);
     }
   }
 
@@ -50,7 +58,8 @@ export default function Dashboard() {
       <section className="tracked-section">
         {loading && (
           <div className="status-loading">
-            <span className="spinner" /> Loading tracked products...
+            <span className="spinner" /> 
+            {isWaking ? 'Server is waking up (this may take up to 50s)...' : 'Loading tracked products...'}
           </div>
         )}
 
