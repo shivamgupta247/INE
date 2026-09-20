@@ -14,19 +14,22 @@ export async function cronScrape(req, res) {
   }
 
   try {
-    console.log('[CronController] Starting scheduled scrape...');
-    const result = await scrapeAllActiveProducts();
+    console.log('[CronController] Triggering scheduled scrape in background...');
+    
+    // We do NOT await this. Scraping 10 products takes 1-2 minutes.
+    // Cron-job.org times out after 30 seconds. So we trigger it in the background
+    // and respond immediately to keep the cron job "Green/Successful".
+    scrapeAllActiveProducts().then(result => {
+      console.log(`[CronController] Background scrape complete: ${result.succeeded}/${result.total} succeeded.`);
+    }).catch(err => {
+      console.error('[CronController] Background scrape error:', err.message);
+    });
     
     res.json({
-      message: 'Cron scrape completed',
-      total: result.total,
-      succeeded: result.succeeded,
-      failed: result.failed,
+      message: 'Cron scrape triggered successfully in the background'
     });
   } catch (err) {
-    console.error('[CronController] Cron scrape error:', err.message);
-    // Truncate error message to avoid cron-job.org "output too large" on catastrophic failures
     const safeError = err.message ? err.message.substring(0, 200) : 'Unknown error';
-    res.status(500).json({ error: 'Cron scrape failed', message: safeError });
+    res.status(500).json({ error: 'Failed to trigger cron', message: safeError });
   }
 }
