@@ -1,32 +1,66 @@
-# Design Note & Architecture Decisions
+# Architecture & Design Decisions
 
-This document explains the technical choices I made while building the INE Price Tracker, how I ensured reliability against the mock store, and how I overcame critical development challenges.
+This document outlines my thought process, the architectural choices I made, the alternatives I considered, and the real-world challenges I faced while building the INE Price Tracker. I wanted to build a system that wasn't just a basic script, but a reliable, production-ready application.
 
-## 1. Making the Scraper Reliable
-The INE mock store was designed to be intentionally difficult to scrape (dynamic elements, slow load times, anti-bot mechanisms). To make my scraper rock-solid, I implemented the following strategies:
+---
 
-* **Exponential Backoff:** If the mock store fails to load or drops a connection, the scraper doesn't just crash. It catches the error and retries the scrape automatically, waiting progressively longer between attempts (2 seconds, 4 seconds, 6 seconds). This ensures temporary network hiccups don't ruin the data collection.
-* **Human-like Interaction (Anti-Bot Bypass):** The store requires mouse movements and hover events to reveal the price. I programmed Playwright to simulate organic mouse movements (randomized X/Y offsets) and wait for a specific "dwell time" over the price container before attempting to click the button.
-* **Handling Overlays:** The biggest hidden issue was a random cookie consent banner that sometimes intercepted the "Reveal Price" click. I solved this by explicitly querying for `.cookie-banner button` and, as a fallback, using Playwright's `force: true` on the reveal click to bypass invisible overlays.
+## 1. System Architecture
 
-## 2. Infrastructure Trade-offs
-I deployed the backend to Render's free tier, which imposes severe constraints (only 512MB of RAM and 0.1 CPU). Playwright is notoriously resource-heavy because it runs a full Chromium browser. 
+The application is built on a decoupled, asynchronous architecture designed to handle heavy scraping loads on limited cloud resources.
 
-**The Trade-off:** 
-To prevent the server from running out of memory (OOM crashes), I had to heavily optimize the browser launch arguments (`--disable-dev-shm-usage`, `--disable-gpu`, `--no-sandbox`). More importantly, I couldn't run the cron job every 1 minute as initially desired. A 1-minute cron caused overlapping browser sessions, immediately crashing the server. I chose to schedule the cron job for **every 2 hours**. This trade-off sacrifices real-time latency for stability, which is essential for a reliable tracker on free hosting.
+- **Frontend (React + Vite):** A lightweight Single Page Application (SPA) that provides a real-time dashboard. It uses Recharts for price visualization and fetches data via REST APIs.
+- **Backend (Node.js + Express):** The core engine. It exposes secure endpoints for the frontend and a private cron endpoint for the scheduler.
+- **Scraping Engine (Playwright):** A headless Chromium browser managed by the backend that navigates the mock store, bypasses anti-bot measures, and extracts data.
+- **Database (Supabase / PostgreSQL):** A relational database storing `tracked_products`, `price_stock_history`, and granular `scrape_logs`.
+- **Alerting (Resend):** An external service integrated into the backend to dispatch HTML emails upon detecting price drops.
+- **Trigger Mechanism (Cron-job.org):** An external scheduling service that acts as a pulse, waking the server and triggering the scraping cycle.
 
-## 3. Key Development Challenges & Fixes
+---
 
-During development, I faced several tricky edge cases while interacting with the mock store and extracting data:
+## 2. Key Decisions & Alternatives Considered
 
-1. **Extracting Stale Data due to Reactivity:** 
-   * **The Problem:** Initially, my scraper was extracting the price string immediately after the page loaded. However, because the mock store uses a React-like framework, the DOM was rendering a "loading" placeholder (`--`) for a split second before injecting the actual price. My scraper was returning `null` or crashing because it couldn't parse the placeholder as a number.
-   * **My Fix:** I abandoned static DOM extraction and implemented a robust `Promise.race` inside a `waitForPriceResult` function. The scraper now waits explicitly for the CSS classes `.price-success` or `.price-error` to appear in the DOM before attempting to read any text.
+When designing the system, I had to make several critical choices:
 
-2. **The Hidden Cookie Banner Interception:**
-   * **The Problem:** I wrote a standard `await page.click('.reveal-price-btn')`. While testing locally, it worked fine. But randomly, the clicks started failing with an "element intercepted" error.
-   * **The Fix:** I realized a dynamic Cookie Consent banner was occasionally sliding up and covering the button. To fix this, I added logic to check if the banner is present and click "Accept" first. As a failsafe, I also added `{ force: true }` to the price button click, ensuring Playwright bypasses non-blocking pointer events.
+### Decision 1: How to Extract the Data?
+* **Alternative:** I initially considered using `axios` and `cheerio` to fetch the HTML and parse it. It's incredibly fast and uses almost zero RAM.
+* **Why I rejected it:** The mock store requires user interaction (clicking a "Reveal Price" button) and relies heavily on client-side React rendering. `cheerio` cannot execute JavaScript or click buttons. 
+* **My Choice:** I chose **Playwright**. It allows me to launch a real browser, wait for the DOM to hydrate, bypass the cookie banner, and physically click the button to trigger the price fetch.
 
-3. **Handling Flaky Network Responses:**
-   * **The Problem:** The mock store randomly simulates HTTP 500 errors or extreme latency (taking up to 10 seconds to respond). My standard HTTP requests were timing out, causing the entire cron job to fail.
-   * **The Fix:** I implemented a custom error-handling layer that intercepts these specific Timeout errors, categorizes them as "Store Server Delay", and triggers the Exponential Backoff retry system rather than abandoning the scrape entirely.
+### Decision 2: How to Schedule the Scrapes?
+* **Alternative:** I could have used `node-cron` directly inside my `server.js` file to run a timer.
+* **Why I rejected it:** On Render's free tier, the server goes to sleep after 15 minutes of inactivity. If the server is asleep, internal Node timers stop working entirely. The scrapes would never happen.
+* **My Choice:** I chose an external service (**cron-job.org**) to hit an exposed API endpoint (`/api/cron/scrape`). This guarantees the server is forcibly woken up from the outside, ensuring the scrape runs no matter what.
+
+### Decision 3: Handling Heavy Cron Workloads
+* **Alternative:** Wait for the scraping to finish and then return the response to `cron-job.org`.
+* **Why I rejected it:** Scraping 10 products takes ~15 minutes due to the store's intentional delays. Most free cron schedulers timeout after 30 seconds. If I made the cron wait, it would throw a "Timeout Error" and potentially retry, causing a catastrophic loop.
+* **My Choice:** **Background Promise Detachment**. When the cron hits my API, I immediately return a `200 OK` response to satisfy the scheduler, and I let the `scrapeAllActiveProducts()` promise run detached in the background.
+
+---
+
+## 3. The Trade-offs
+
+Building for a free cloud tier (512MB RAM, 0.1 CPU) forced me to make a few painful but necessary trade-offs:
+
+1. **Sequential over Parallel Execution:** 
+   I would love to scrape all 10 products simultaneously to save time. However, launching 10 Playwright Chromium instances would instantly crash the Render container (Out-Of-Memory). **The Trade-off:** I process products sequentially in a single `for...of` loop. It takes 15 minutes to finish, but it guarantees 100% server stability.
+2. **2-Hour Intervals instead of Real-Time:** 
+   I wanted to track prices every 5 minutes. But because sequential scraping takes so long, overlapping cron jobs caused memory crashes. **The Trade-off:** I scaled the cron interval back to 2 hours. It sacrifices real-time alerts, but provides a much more robust and healthy backend.
+
+---
+
+## 4. Challenges & How I Fixed Them
+
+The development process wasn't smooth. Here are the genuine challenges I ran into and how I solved them:
+
+### Challenge 1: The "Invisible" Cookie Banner Intercepting Clicks
+While testing, my scraper would randomly fail to click the "Reveal Price" button. Playwright threw an `element intercepted` error. I realized a dynamic Cookie Banner was sliding up and physically covering the button.
+**The Fix:** I added robust logic to look for the banner button using a Regex text matcher (`page.getByRole('button', { name: /^ACCEPT$/i })`). If the banner appears, the scraper clicks "Accept" to dismiss it before attempting to click the price button.
+
+### Challenge 2: The Silent "No Email" Bug
+My dashboard was showing price drops, but I wasn't receiving any email alerts. I couldn't figure out why, because the test emails were working perfectly.
+**The Fix:** I realized that during the bulk Cron scrape, the function fetching the active products (`getActiveTrackedProducts`) wasn't joining the `latest_price` from the history table. When the backend tried to check `if (newPrice < oldPrice)`, `oldPrice` was undefined, so it silently skipped the email. I fixed it by modifying the SQL query to enrich the product data with the latest price history before initiating the scrape.
+
+### Challenge 3: Overlapping Cron Job Crashes (OOM)
+When I set the cron job to 5 minutes for testing, the server started crashing wildly (`OOMKilled`). Because a batch of 10 products takes 15 minutes to scrape, the 5-minute cron triggers were piling up. Two or three heavy background scraping loops were trying to run at the same time.
+**The Fix:** I implemented a simple **Concurrency Lock** (`let isCronScraping = false`). Now, when the endpoint is hit, it checks the lock. If a scrape is already running, it elegantly skips the new trigger and prints `[ScrapeService] A scrape is already running. Skipping this cron trigger to prevent memory crash.` This completely eliminated the server crashes!
