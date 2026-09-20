@@ -25,6 +25,8 @@ export async function cronScrape(req, res) {
     });
   } catch (err) {
     console.error('[CronController] Cron scrape error:', err.message);
-    res.status(500).json({ error: 'Cron scrape failed', message: err.message });
+    // Truncate error message to avoid cron-job.org "output too large" on catastrophic failures
+    const safeError = err.message ? err.message.substring(0, 200) : 'Unknown error';
+    res.status(500).json({ error: 'Cron scrape failed', message: safeError });
   }
 }
