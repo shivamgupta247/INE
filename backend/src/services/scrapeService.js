@@ -64,18 +64,27 @@ export async function scrapeOneProduct(trackedProductId, options = {}) {
   };
 }
 
+let isCronScraping = false;
+
 /**
  * Scrape all active tracked products (for cron jobs).
  */
 export async function scrapeAllActiveProducts() {
+  if (isCronScraping) {
+    console.log('[ScrapeService] A scrape is already running in the background. Skipping this cron trigger to prevent memory crash.');
+    return { total: 0, succeeded: 0, failed: 0, results: [], message: 'Already running' };
+  }
+
   const products = await getActiveTrackedProducts();
   if (products.length === 0) {
     console.log('[ScrapeService] No active tracked products to scrape');
     return { total: 0, succeeded: 0, failed: 0, results: [] };
   }
 
-  console.log(`[ScrapeService] Starting cron scrape for ${products.length} products`);
-  const results = await scrapeAllProducts(products);
+  isCronScraping = true;
+  try {
+    console.log(`[ScrapeService] Starting cron scrape for ${products.length} products`);
+    const results = await scrapeAllProducts(products);
 
   // Save results to database
   const summary = {
@@ -131,4 +140,7 @@ export async function scrapeAllActiveProducts() {
 
   console.log(`[ScrapeService] Cron scrape complete: ${summary.succeeded}/${summary.total} succeeded`);
   return summary;
+  } finally {
+    isCronScraping = false;
+  }
 }
