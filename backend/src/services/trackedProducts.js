@@ -231,13 +231,35 @@ export async function saveScrapeLogs(logs) {
 export async function getActiveTrackedProducts() {
   const supabase = getSupabase();
 
-  const { data, error } = await supabase
+  const { data: products, error } = await supabase
     .from('tracked_products')
     .select('*')
     .eq('is_active', true);
 
   if (error) throw error;
-  return data;
+  
+  // Get latest price for each product so the scrape service can check for price drops
+  const enriched = await Promise.all(
+    products.map(async (product) => {
+      const { data: latestHistory } = await supabase
+        .from('price_stock_history')
+        .select('*')
+        .eq('tracked_product_id', product.id)
+        .order('scraped_at', { ascending: false })
+        .limit(1);
+
+      return {
+        ...product,
+        latest_price: latestHistory?.[0]?.price || null,
+        latest_currency: latestHistory?.[0]?.currency || null,
+        latest_mrp: latestHistory?.[0]?.mrp || null,
+        latest_stock_status: latestHistory?.[0]?.stock_status || null,
+        latest_stock_quantity: latestHistory?.[0]?.stock_quantity ?? null,
+      };
+    })
+  );
+
+  return enriched;
 }
 
 /**
