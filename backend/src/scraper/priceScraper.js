@@ -57,8 +57,6 @@ export async function scrapeProduct(product, options = {}) {
         page.setDefaultTimeout(config.scraper.timeoutMs);
 
         const productUrl = `${BASE_URL}/product/${product.store_product_id}`;
-        console.log(`[Scraper] Attempt ${attempt}/${maxRetries} for ${product.name} (${productUrl})`);
-
         // Navigate to product page
         await page.goto(productUrl, { waitUntil: 'networkidle', timeout: 30000 });
 
@@ -85,7 +83,8 @@ export async function scrapeProduct(product, options = {}) {
 
         // Click "Reveal price" button
         const revealButton = page.locator('button:has-text("Reveal price")');
-        const isRevealVisible = await revealButton.isVisible({ timeout: 5000 }).catch(() => false);
+        await revealButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+        const isRevealVisible = await revealButton.isVisible();
         
         if (isRevealVisible) {
           await revealButton.click({ timeout: 10000, force: true });
@@ -222,15 +221,16 @@ export async function scrapeAllProducts(products, options = {}) {
  */
 async function handleCookieConsent(page) {
   try {
-    // Wait briefly for cookie overlay to appear (it shows up with 1500-5000ms delay)
-    const acceptBtn = page.locator('.cookie-banner button:has-text("Accept")');
-    const isVisible = await acceptBtn.isVisible({ timeout: 5000 }).catch(() => false);
-    if (isVisible) {
-      await acceptBtn.click();
-      console.log('[Scraper] Dismissed cookie consent');
-      await delay(300);
+    // The cookie overlay might be a modal without the .cookie-banner class.
+    // Wait max 1.5s to keep the scraper fast.
+    const acceptBtn = page.locator('button', { hasText: /^ACCEPT$/i }).first();
+    await acceptBtn.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
+    
+    if (await acceptBtn.isVisible()) {
+      await acceptBtn.click({ force: true });
+      await delay(500);
     }
-  } catch {
+  } catch (err) {
     // No cookie banner — that's fine
   }
 }
@@ -242,7 +242,8 @@ async function handleCookieConsent(page) {
 async function simulateHoverInteraction(page) {
   try {
     const priceBlock = page.locator('.price-block').first();
-    const isVisible = await priceBlock.isVisible({ timeout: 5000 }).catch(() => false);
+    await priceBlock.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    const isVisible = await priceBlock.isVisible();
     
     if (!isVisible) {
       // Price block might not be visible yet, try the idle state
@@ -273,7 +274,7 @@ async function simulateHoverInteraction(page) {
     // Dwell for sufficient time
     await delay(700);
   } catch (err) {
-    console.log('[Scraper] Hover interaction issue:', err.message);
+    // Ignore hover errors silently
   }
 }
 
@@ -459,6 +460,7 @@ function createLog(productId, scrapeRunId, attempt, status, errorType, errorMess
     response_time_ms: responseTime || null,
     extracted_price: price || null,
     extracted_stock: stock !== undefined ? stock : null,
+    created_at: new Date().toISOString(),
   };
 }
 

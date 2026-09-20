@@ -158,8 +158,34 @@ export async function getProductLogs(productId, limit = 100) {
     .order('created_at', { ascending: false })
     .limit(limit);
 
-  if (error) throw error;
-  return data;
+  // We want the newest scrape runs at the top, but within each run, 
+  // the logs should be chronological (Attempt 1, then 2, then 3).
+  const runs = [];
+  const runMap = new Map();
+
+  for (const log of data) {
+    if (!runMap.has(log.scrape_run_id)) {
+      const newRun = [];
+      runs.push(newRun);
+      runMap.set(log.scrape_run_id, newRun);
+    }
+    runMap.get(log.scrape_run_id).push(log);
+  }
+
+  // Sort each group chronologically (oldest event first)
+  for (const run of runs) {
+    run.sort((a, b) => {
+      const timeDiff = new Date(a.created_at) - new Date(b.created_at);
+      if (timeDiff !== 0) return timeDiff;
+      // Fallback for identical timestamps
+      if (a.attempt_number !== b.attempt_number) return a.attempt_number - b.attempt_number;
+      if (a.status === 'RETRY') return 1;
+      if (b.status === 'RETRY') return -1;
+      return 0;
+    });
+  }
+
+  return runs.flat();
 }
 
 /**

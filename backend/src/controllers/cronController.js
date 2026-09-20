@@ -19,7 +19,9 @@ export async function cronScrape(req, res) {
     
     res.json({
       message: 'Cron scrape completed',
-      ...result,
+      total: result.total,
+      succeeded: result.succeeded,
+      failed: result.failed,
     });
   } catch (err) {
     console.error('[CronController] Cron scrape error:', err.message);
