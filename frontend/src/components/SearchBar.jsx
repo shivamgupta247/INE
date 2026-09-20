@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { searchProducts, trackProduct } from '../services/api';
 
 export default function SearchBar({ onProductTracked }) {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -52,11 +54,16 @@ export default function SearchBar({ onProductTracked }) {
   async function handleTrack(product) {
     setTracking(product.id);
     try {
-      await trackProduct(product);
+      const response = await trackProduct(product);
       setShowResults(false);
       setQuery('');
       setResults([]);
       onProductTracked?.();
+      
+      // Redirect to the newly tracked product's detail page
+      if (response && response.product && response.product.id) {
+        navigate(`/product/${response.product.id}`);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
