@@ -13,6 +13,7 @@ export async function getTrackedProducts() {
   const { data: products, error } = await supabase
     .from('tracked_products')
     .select('*')
+    .eq('is_active', true)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
