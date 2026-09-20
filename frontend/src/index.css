@@ -10,12 +10,12 @@
   --bg-card-hover: #222845;
   --bg-elevated: #252b45;
   --bg-input: #151b30;
-  
+
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --text-inverse: #0f172a;
-  
+
   --accent-primary: #6366f1;
   --accent-primary-light: #818cf8;
   --accent-primary-dark: #4f46e5;
@@ -24,30 +24,36 @@
   --accent-warning: #fbbf24;
   --accent-danger: #f87171;
   --accent-info: #60a5fa;
-  
+
   --border-subtle: rgba(148, 163, 184, 0.1);
   --border-medium: rgba(148, 163, 184, 0.2);
   --border-strong: rgba(148, 163, 184, 0.3);
-  
+
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
-  
+
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 24px;
-  
+
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  
+
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Reset & base */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 html {
   font-size: 16px;
@@ -57,7 +63,7 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background: 
+  background:
     radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.12), transparent 25%),
     radial-gradient(circle at 85% 30%, rgba(34, 211, 238, 0.12), transparent 25%),
     var(--bg-primary);
@@ -67,8 +73,15 @@ body {
   background-attachment: fixed;
 }
 
-a { color: var(--accent-primary-light); text-decoration: none; transition: color var(--transition-fast); }
-a:hover { color: var(--accent-secondary); }
+a {
+  color: var(--accent-primary-light);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--accent-secondary);
+}
 
 /* ====================================================
    Layout
@@ -137,7 +150,8 @@ a:hover { color: var(--accent-secondary); }
   transition: all var(--transition-fast);
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
   color: var(--text-primary);
   background: var(--bg-card);
 }
@@ -226,7 +240,9 @@ a:hover { color: var(--accent-secondary); }
   transform: translateY(-2px);
 }
 
-.product-card:hover::before { opacity: 1; }
+.product-card:hover::before {
+  opacity: 1;
+}
 
 .product-card-header {
   display: flex;
@@ -473,8 +489,13 @@ a:hover { color: var(--accent-secondary); }
   transition: background var(--transition-fast);
 }
 
-.search-result-item:last-child { border-bottom: none; }
-.search-result-item:hover { background: var(--bg-elevated); }
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: var(--bg-elevated);
+}
 
 .search-result-info {
   flex: 1;
@@ -613,8 +634,13 @@ a:hover { color: var(--accent-secondary); }
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.data-table th:first-child { border-radius: var(--radius-sm) 0 0 0; }
-.data-table th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+.data-table th:first-child {
+  border-radius: var(--radius-sm) 0 0 0;
+}
+
+.data-table th:last-child {
+  border-radius: 0 var(--radius-sm) 0 0;
+}
 
 .data-table td {
   padding: 10px 16px;
@@ -645,12 +671,35 @@ a:hover { color: var(--accent-secondary); }
   text-transform: uppercase;
 }
 
-.status-success { background: rgba(52, 211, 153, 0.15); color: var(--accent-success); }
-.status-retry { background: rgba(251, 191, 36, 0.15); color: var(--accent-warning); }
-.status-failed { background: rgba(248, 113, 113, 0.15); color: var(--accent-danger); }
-.status-timeout { background: rgba(248, 113, 113, 0.15); color: var(--accent-danger); }
-.status-parse_error { background: rgba(251, 191, 36, 0.15); color: var(--accent-warning); }
-.status-invalid_data { background: rgba(251, 191, 36, 0.15); color: var(--accent-warning); }
+.status-success {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--accent-success);
+}
+
+.status-retry {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--accent-warning);
+}
+
+.status-failed {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--accent-danger);
+}
+
+.status-timeout {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--accent-danger);
+}
+
+.status-parse_error {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--accent-warning);
+}
+
+.status-invalid_data {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--accent-warning);
+}
 
 /* ====================================================
    Charts container
@@ -716,7 +765,9 @@ a:hover { color: var(--accent-secondary); }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Loading states */
@@ -774,7 +825,9 @@ a:hover { color: var(--accent-secondary); }
   transition: all var(--transition-fast);
 }
 
-.tab:hover { color: var(--text-primary); }
+.tab:hover {
+  color: var(--text-primary);
+}
 
 .tab.active {
   color: var(--accent-primary-light);
@@ -794,7 +847,9 @@ a:hover { color: var(--accent-secondary); }
   transition: color var(--transition-fast);
 }
 
-.back-link:hover { color: var(--accent-primary-light); }
+.back-link:hover {
+  color: var(--accent-primary-light);
+}
 
 /* ====================================================
    Responsive
@@ -803,15 +858,15 @@ a:hover { color: var(--accent-secondary); }
   .products-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .detail-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .detail-header {
     flex-direction: column;
   }
-  
+
   .header-inner {
     flex-direction: column;
     height: auto;
@@ -832,20 +887,30 @@ a:hover { color: var(--accent-secondary); }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }
+
 /* ====================================================
    Stats Overview Row
    ==================================================== */
 .stats-overview {
   margin-bottom: 40px;
 }
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
 }
+
 .stat-card {
   background: rgba(26, 31, 54, 0.6);
   backdrop-filter: blur(12px);
@@ -860,18 +925,24 @@ a:hover { color: var(--accent-secondary); }
   position: relative;
   overflow: hidden;
 }
+
 .stat-card::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; height: 2px;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
   background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
   opacity: 0.5;
 }
+
 .stat-card:hover {
   transform: translateY(-3px);
   border-color: rgba(99, 102, 241, 0.5);
   box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
 }
+
 .stat-icon {
   font-size: 2.5rem;
   background: rgba(99, 102, 241, 0.1);
@@ -881,10 +952,12 @@ a:hover { color: var(--accent-secondary); }
   align-items: center;
   justify-content: center;
 }
+
 .stat-info {
   display: flex;
   flex-direction: column;
 }
+
 .stat-label {
   font-size: 0.85rem;
   color: var(--text-secondary);
@@ -892,6 +965,7 @@ a:hover { color: var(--accent-secondary); }
   letter-spacing: 0.05em;
   margin-bottom: 4px;
 }
+
 .stat-value {
   font-size: 1.75rem;
   font-weight: 800;
@@ -905,6 +979,7 @@ a:hover { color: var(--accent-secondary); }
   border: 1px solid rgba(248, 113, 113, 0.3);
   box-shadow: 0 0 10px rgba(248, 113, 113, 0.2);
 }
+
 /* ====================================================
    Sort Controls
    ==================================================== */
@@ -915,6 +990,7 @@ a:hover { color: var(--accent-secondary); }
   gap: 12px;
   margin-bottom: 24px;
 }
+
 .sort-label {
   font-size: 0.85rem;
   font-weight: 600;
@@ -922,6 +998,7 @@ a:hover { color: var(--accent-secondary); }
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
 .sort-select {
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
@@ -934,9 +1011,11 @@ a:hover { color: var(--accent-secondary); }
   cursor: pointer;
   transition: all var(--transition-fast);
 }
+
 .sort-select:hover {
   border-color: var(--accent-primary);
 }
+
 .sort-select:focus {
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
