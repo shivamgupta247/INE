@@ -57,10 +57,14 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background: var(--bg-primary);
+  background: 
+    radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.12), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(34, 211, 238, 0.12), transparent 25%),
+    var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
+  background-attachment: fixed;
 }
 
 a { color: var(--accent-primary-light); text-decoration: none; transition: color var(--transition-fast); }
@@ -76,9 +80,11 @@ a:hover { color: var(--accent-secondary); }
 }
 
 .app-header {
-  background: rgba(17, 24, 39, 0.85);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(10, 14, 26, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -156,11 +162,13 @@ a:hover { color: var(--accent-secondary); }
    Cards
    ==================================================== */
 .card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: rgba(26, 31, 54, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg);
   padding: 24px;
   transition: all var(--transition-normal);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .card:hover {
@@ -185,8 +193,9 @@ a:hover { color: var(--accent-secondary); }
    Product Card
    ==================================================== */
 .product-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: rgba(26, 31, 54, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg);
   padding: 20px;
   display: flex;
@@ -196,6 +205,7 @@ a:hover { color: var(--accent-secondary); }
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
 .product-card::before {
